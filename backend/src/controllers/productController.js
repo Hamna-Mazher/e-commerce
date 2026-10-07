@@ -1,43 +1,44 @@
 const { pool } = require("../config/pgd");
-
+const {
+  createProductService,
+  updateProductService,
+  deleteProductService,
+} = require("../services/productService");
 // =====================================================
 // CREATE PRODUCT
 // =====================================================
 
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+    } = req.body;
 
-    const result = await pool.query(
-      `
-      INSERT INTO products
-      (
+    const product =
+      await createProductService({
         name,
         description,
         price,
         category,
-        image,
-        "createdBy"
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-      `,
-      [
-        name,
-        description || "",
-        price,
-        category,
-        req.file ? req.file.filename : "",
-        req.user.id,
-      ]
-    );
+        image: req.file
+          ? req.file.filename
+          : "",
+        createdBy: req.user.id,
+      });
 
     res.status(201).json({
-      message: "Product created successfully",
-      product: result.rows[0],
+      message:
+        "Product created successfully",
+      product,
     });
   } catch (error) {
-    console.error("Create Product Error:", error);
+    console.error(
+      "Create Product Error:",
+      error
+    );
 
     res.status(500).json({
       message: error.message,
@@ -151,75 +152,35 @@ const getProductById = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    const { name, description, price, category } = req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+    } = req.body;
 
-    const newImage = req.file
-      ? req.file.filename
-      : null;
-
-    let result;
-
-    if (newImage) {
-      // Update WITH new image
-      result = await pool.query(
-        `
-        UPDATE products
-        SET
-          name = $1,
-          description = $2,
-          price = $3,
-          category = $4,
-          image = $5,
-          "updatedAt" = CURRENT_TIMESTAMP
-        WHERE id = $6
-        RETURNING *
-        `,
-        [
-          name,
-          description || "",
-          price,
-          category,
-          newImage,
-          req.params.id,
-        ]
-      );
-    } else {
-      // Update WITHOUT changing existing image
-      result = await pool.query(
-        `
-        UPDATE products
-        SET
-          name = $1,
-          description = $2,
-          price = $3,
-          category = $4,
-          "updatedAt" = CURRENT_TIMESTAMP
-        WHERE id = $5
-        RETURNING *
-        `,
-        [
-          name,
-          description || "",
-          price,
-          category,
-          req.params.id,
-        ]
-      );
-    }
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Product not found",
+    const product =
+      await updateProductService({
+        id: req.params.id,
+        name,
+        description,
+        price,
+        category,
+        image: req.file
+          ? req.file.filename
+          : null,
       });
-    }
 
     res.status(200).json({
-      message: "Product updated successfully",
-      product: result.rows[0],
+      message:
+        "Product updated successfully",
+      product,
     });
-
   } catch (error) {
-    console.error("Update Product Error:", error);
+    console.error(
+      "Update Product Error:",
+      error
+    );
 
     res.status(500).json({
       message: error.message,
@@ -232,34 +193,27 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    const result = await pool.query(
-      `
-      DELETE FROM products
-      WHERE id = $1
-      RETURNING *
-      `,
-      [req.params.id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Product not found",
+    const product =
+      await deleteProductService({
+        id: req.params.id,
       });
-    }
 
     res.status(200).json({
-      message: "Product deleted successfully",
-      product: result.rows[0],
+      message:
+        "Product deleted successfully",
+      product,
     });
   } catch (error) {
-    console.error("Delete Product Error:", error);
+    console.error(
+      "Delete Product Error:",
+      error
+    );
 
     res.status(500).json({
       message: error.message,
     });
   }
 };
-
 module.exports = {
   createProduct,
   getProducts,

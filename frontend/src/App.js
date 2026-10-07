@@ -12,7 +12,7 @@ import { Toaster } from "react-hot-toast";
 import Users from "./pages/Users";
 import UserProfile from "./pages/UserProfile";
 import Orders from "./pages/Orders";
-
+import Chat from "./pages/Chat";
 import Meetings from "./pages/Meetings";
 function App() {
   return (
@@ -108,6 +108,14 @@ function App() {
   element={
     <ProtectedRoute>
       <Meetings />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/chat"
+  element={
+    <ProtectedRoute>
+      <Chat />
     </ProtectedRoute>
   }
 />

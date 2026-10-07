@@ -240,7 +240,116 @@ console.log("✅ Meetings table ready");
         ON DELETE CASCADE
     );
   `);
+  await pool.query(`
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+  id SERIAL PRIMARY KEY,
+
+  "sourceType" VARCHAR(50) NOT NULL,
+
+  "sourceId" INTEGER,
+
+  content TEXT NOT NULL,
+
+  metadata JSONB DEFAULT '{}'::jsonb,
+
+  embedding VECTOR(1536),
+
+  search_vector TSVECTOR,
+
+  "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+`);
+console.log("✅ Knowledge documents table ready");
+await pool.query(`
+  CREATE INDEX IF NOT EXISTS knowledge_documents_embedding_idx
+  ON knowledge_documents
+  USING hnsw (embedding vector_cosine_ops);
+`);
+await pool.query(`
+  ALTER TABLE knowledge_documents
+  ADD COLUMN IF NOT EXISTS search_vector TSVECTOR;
+`);
+await pool.query(`
+  UPDATE knowledge_documents
+  SET search_vector =
+    to_tsvector(
+      'english',
+      content
+    )
+  WHERE search_vector IS NULL;
+`);
+await pool.query(`
+  CREATE INDEX IF NOT EXISTS
+  knowledge_documents_search_idx
+  ON knowledge_documents
+  USING GIN(search_vector);
+`);
+await pool.query(`
+  ALTER TABLE knowledge_documents
+  ADD COLUMN IF NOT EXISTS collection VARCHAR(50);
+`);
+await pool.query(`
+  UPDATE knowledge_documents
+  SET collection = "sourceType"
+  WHERE collection IS NULL;
+
+`);
+// =====================================================
+// CHAT SESSIONS
+// =====================================================
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS chat_sessions (
+    id SERIAL PRIMARY KEY,
+
+    "userId" INTEGER NOT NULL,
+
+    title VARCHAR(255) NOT NULL DEFAULT 'New Chat',
+
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chat_session_user_fk
+      FOREIGN KEY ("userId")
+      REFERENCES users(id)
+      ON DELETE CASCADE
+  );
+`);
+
+console.log("✅ Chat sessions table ready");
+
+// =====================================================
+// CHAT MESSAGES
+// =====================================================
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id SERIAL PRIMARY KEY,
+
+    "sessionId" INTEGER NOT NULL,
+
+    role VARCHAR(20) NOT NULL
+      CHECK (role IN ('user', 'assistant')),
+
+    content TEXT NOT NULL,
+
+    sources JSONB DEFAULT '[]'::jsonb,
+
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chat_message_session_fk
+      FOREIGN KEY ("sessionId")
+      REFERENCES chat_sessions(id)
+      ON DELETE CASCADE
+  );
+`);
+
+console.log("✅ Chat messages table ready");
 };
+
 
 // =====================================================
 // EXPORT

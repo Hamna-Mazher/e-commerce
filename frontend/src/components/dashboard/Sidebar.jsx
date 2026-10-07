@@ -4,6 +4,7 @@ import {
   Users,
   ShoppingCart,
   CalendarDays,
+  Sparkles,
   LogOut,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -28,12 +29,12 @@ function Sidebar() {
     }`;
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-slate-800 bg-slate-900 p-6">
+   <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-900 p-6">
       <h1 className="mb-10 text-2xl font-bold">
         Dashboard
       </h1>
 
-      <nav className="space-y-3">
+     <nav className="flex-1 space-y-3 overflow-y-auto">
 
         {/* Dashboard */}
         <NavLink
@@ -77,6 +78,13 @@ function Sidebar() {
 >
   <CalendarDays size={20} />
   Meetings
+</NavLink>
+<NavLink
+  to="/chat"
+  className={linkClasses}
+>
+  <Sparkles size={20} />
+  AI Assistant
 </NavLink>
       </nav>
 

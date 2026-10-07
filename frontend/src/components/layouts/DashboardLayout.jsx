@@ -28,7 +28,6 @@ function DashboardLayout({
         </main>
 
       </div>
-
     </div>
   );
 }
